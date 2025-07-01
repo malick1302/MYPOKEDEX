@@ -18,3 +18,8 @@ export async function fetchPokemonDetails(url) {
     const res = await fetch(chainUrl);
     return await res.json();
   }
+
+  export async function fetchPokemonId(id){
+    const res= await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
+    return await res.json();
+  }

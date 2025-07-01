@@ -1,8 +1,7 @@
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
-  </div>
+  <h1 class="text-3xl font-bold text-blue-500">Bonjour Tailwind !</h1>
 </template>
+
 
 <style>
 @media (min-width: 1024px) {

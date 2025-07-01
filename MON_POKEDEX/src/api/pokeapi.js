@@ -23,3 +23,28 @@ export async function fetchPokemonDetails(url) {
     const res= await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
     return await res.json();
   }
+
+
+  export async function fetchEvolutionChainByName(name) {
+    try {
+      const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${name}`)
+      const speciesData = await speciesRes.json()
+  
+      const evoRes = await fetch(speciesData.evolution_chain.url)
+      const evoData = await evoRes.json()
+  
+      const chain = []
+      let current = evoData.chain
+  
+      while (current) {
+        chain.push(current.species.name)
+        current = current.evolves_to[0]
+      }
+  
+      return chain
+    } catch (error) {
+      console.error('il y a un problème lors du chargement des évolutions...', error)
+      return []
+    }
+  }
+  

@@ -1,6 +1,6 @@
 <script setup>
-const { createApp } = Vue
-const { createRouter, createWebHistory } = VueRouter
+import { createApp } from 'vue'
+import { createRouter, createWebHistory } from "vue-router"
 </script>
 
 

@@ -8,7 +8,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   if (stored) {
     try {
       favorite.value = JSON.parse(stored)
-    } catch(e) {
+    } catch {
       favorite.value = []
     }
   }
@@ -31,14 +31,13 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  const isFavorite = (name) => favorite.value.includes(name)
+  function isFavorite(name) {
+    return favorite.value.includes(name)
+  }
 
   watch(favorite, (val) => {
     localStorage.setItem('favorite', JSON.stringify(val))
   }, { deep: true })
-
-
-
 
   return { favorite, addFavorite, removeFavorite, toggleFavorite, isFavorite }
 })

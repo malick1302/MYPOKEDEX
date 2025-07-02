@@ -47,5 +47,12 @@ export async function fetchPokemonDetails(url) {
       return []
     }
   }
+
+  export async function fetchPokemonByType(typeName) {
+    const response = await fetch(`https://pokeapi.co/api/v2/type/${typeName}`)
+    if (!response.ok) throw new Error('Erreur lors du fetch du type ' + typeName)
+    return response.json()
+  }
+  
   
   

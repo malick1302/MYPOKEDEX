@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from "vue-router"
 import { fetchPokemonId, fetchEvolutionChainByName} from '@/api/pokeapi'
+import { useFavoriteStore } from '@/stores/favoriteStore'
 
 const route = useRoute()
 const pokemon = ref(null)
@@ -20,16 +21,21 @@ async function fetchEvolutionDetails(chain) {
   evolutionDetails.value = details
 }
 
-onMounted(async () => {
-
-  pokemon.value = await fetchPokemonId(route.params.id)
+async function loadData(id) {
+  pokemon.value = await fetchPokemonId(id)
   if (pokemon.value?.name) {
     evolutionChain.value = await fetchEvolutionChainByName(pokemon.value.name)
     await fetchEvolutionDetails(evolutionChain.value)
   }
+}
 
+onMounted(() => {
+  loadData(route.params.id)
 })
 
+watch(() => route.params.id, (newId) => {
+  loadData(newId)
+})
 
 
 </script>
@@ -43,12 +49,15 @@ onMounted(async () => {
   
   <div v-if="evolutionChain.length">
     <h2>Chaîne d'évolution :</h2>
-  <ul>
-    <li v-for="evo in evolutionDetails" :key="evo.name">
-      <p>{{ evo.name }}</p>
-      <img :src="evo.sprite" :alt="`Image de ${evo.name}`" />
-    </li>
-  </ul>
+    <ul>
+  <li v-for="evo in evolutionDetails" :key="evo.name">
+    <p>{{ evo.name }}</p>
+   <router-link :to="{ name: 'pokemon-info', params: { id: evo.name } }">
+  <img :src="evo.sprite" :alt="`Image de ${evo.name}`" style="cursor: pointer;" />
+</router-link>
+  </li>
+</ul>
+
 </div>
 
 

@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchPokemonId, fetchEvolutionChainByName } from '@/api/pokeapi'
 import { useFavoriteStore } from '@/stores/favoriteStore'
+import EvolutionChain from '@/components/EvolutionChain.vue'
 
 const route = useRoute()
 const pokemon = ref(null)
@@ -16,8 +17,9 @@ async function fetchEvolutionDetails(chain) {
     const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`)
     const data = await res.json()
     return {
+      id: data.id, 
       name,
-      sprite: data.sprites.front_default
+      image: data.sprites.front_default 
     }
   }))
   evolutionDetails.value = details
@@ -44,7 +46,6 @@ function toggleFavorite() {
     favoriteStore.toggleFavorite(pokemon.value.name)
   }
 }
-
 </script>
 
 <template>
@@ -58,14 +59,7 @@ function toggleFavorite() {
 
     <div v-if="evolutionChain.length" class="mt-4">
       <h2>Chaîne d'évolution :</h2>
-      <ul>
-        <li v-for="evo in evolutionDetails" :key="evo.name">
-          <p>{{ evo.name }}</p>
-          <router-link :to="{ name: 'pokemon-info', params: { id: evo.name } }">
-            <img :src="evo.sprite" :alt="`Image de ${evo.name}`" style="cursor: pointer;" />
-          </router-link>
-        </li>
-      </ul>
+      <EvolutionChain :evolutionDetails="evolutionDetails" />
     </div>
 
     <p>ID: {{ pokemon.id }}</p>

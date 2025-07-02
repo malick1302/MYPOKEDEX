@@ -1,14 +1,15 @@
 <script setup>
 import CardPoke from '@/components/CardPoke.vue'
 import { ref, onMounted, computed, watch } from 'vue'
-import { fetchPokemonDetails, fetchPokemonList, fetchPokemonByType } from '@/api/pokeapi' 
+import { fetchPokemonDetails, fetchPokemonByType } from '@/api/pokeapi'
 
 const pokemons = ref([])
-const offset = ref(0)
+const allPokemonsList = ref([])
 const limit = ref(20)
-const hasNext = ref(false)
-const hasPrev = ref(false)
+const offset = ref(0)
 const sortMode = ref('id')
+const searchQuery = ref('')
+const selectedTypes = ref([])
 
 const allTypes = [
   'bug', 'dark', 'dragon', 'electric', 'fairy', 'fighting', 'fire', 'flying',
@@ -37,36 +38,46 @@ const typeStyles = {
   water: { light: 'radial-gradient(circle, #fff, #2581ef, #fff)' }
 }
 
-const selectedTypes = ref([])
+async function loadAllPokemonsList() {
+  const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=10000')
+  const data = await res.json()
+  allPokemonsList.value = data.results || []
+}
 
-async function loadPokemons() {
+async function loadPokemonsDetails(pokemonSubset) {
+  if (!pokemonSubset?.length) {
+    pokemons.value = []
+    return
+  }
+  const details = await Promise.all(pokemonSubset.map(p => fetchPokemonDetails(p.url)))
+  pokemons.value = details
+}
+
+const filteredPokemonsList = computed(() => {
+  if (selectedTypes.value.length) return []
+  if (!searchQuery.value.trim()) {
+    return allPokemonsList.value.slice(offset.value, offset.value + limit.value)
+  }
+  const query = searchQuery.value.toLowerCase()
+  return allPokemonsList.value.filter(p => p.name.includes(query)).slice(0, limit.value)
+})
+
+watch([filteredPokemonsList, selectedTypes], async () => {
   if (selectedTypes.value.length === 0) {
-    const data = await fetchPokemonList(offset.value, limit.value)
-    hasNext.value = !!data.next && limit.value !== 10000
-    hasPrev.value = offset.value > 0
-    if (!data.results) {
-      pokemons.value = []
-      return
-    }
-    const detailRequests = data.results.map(p => fetchPokemonDetails(p.url))
-    pokemons.value = await Promise.all(detailRequests)
+    await loadPokemonsDetails(filteredPokemonsList.value)
   } else {
-    // On charge par type, on fait une intersection
-    let sets = await Promise.all(selectedTypes.value.map(async (type) => {
-      const data = await fetchPokemonByType(type)
-      return data.pokemon.map(p => p.pokemon) // [{name, url}, ...]
+    let sets = await Promise.all(selectedTypes.value.map(async type => {
+      const res = await fetch(`https://pokeapi.co/api/v2/type/${type}`)
+      const data = await res.json()
+      return data.pokemon.map(p => p.pokemon)
     }))
-    // Intersection
     let common = sets.reduce((acc, list) =>
       acc.filter(p => list.some(x => x.name === p.name))
     )
-    // On charge les détails des pokemons communs
-    const detailRequests = common.map(p => fetchPokemonDetails(p.url))
-    pokemons.value = await Promise.all(detailRequests)
-    hasNext.value = false
-    hasPrev.value = false
+    const subset = common.slice(0, limit.value)
+    await loadPokemonsDetails(subset)
   }
-}
+})
 
 function toggleType(type) {
   if (selectedTypes.value.includes(type)) {
@@ -75,47 +86,35 @@ function toggleType(type) {
     selectedTypes.value.push(type)
   }
   offset.value = 0
-  loadPokemons()
 }
 
 function nextPage() {
-  if (hasNext.value) {
+  if (offset.value + limit.value < allPokemonsList.value.length) {
     offset.value += limit.value
-    loadPokemons()
   }
 }
 
 function prevPage() {
   if (offset.value >= limit.value) {
     offset.value -= limit.value
-    loadPokemons()
   }
 }
 
-const filteredPokemons = computed(() => pokemons.value)
-
 const sortedPokemons = computed(() => {
-  const list = [...filteredPokemons.value]
+  const list = [...pokemons.value]
   if (sortMode.value === 'id') {
-    return list.sort((a,b) => a.id - b.id)
-  } else if (sortMode.value === 'name') {
-    return list.sort((a,b) => a.name.localeCompare(b.name))
-  } else if (sortMode.value === 'type') {
-    return list.sort((a,b) => {
-      const aType = a.types?.[0]?.type?.name || ''
-      const bType = b.types?.[0]?.type?.name || ''
-      return aType.localeCompare(bType)
-    })
+    return list.sort((a, b) => a.id - b.id)
+  }
+  if (sortMode.value === 'name') {
+    return list.sort((a, b) => a.name.localeCompare(b.name))
   }
   return list
 })
 
-watch(limit, () => {
-  offset.value = 0
-  if (selectedTypes.value.length === 0) loadPokemons()
+onMounted(async () => {
+  await loadAllPokemonsList()
+  await loadPokemonsDetails(allPokemonsList.value.slice(0, limit.value))
 })
-
-onMounted(loadPokemons)
 </script>
 
 <template>
@@ -156,6 +155,13 @@ onMounted(loadPokemons)
       </select>
     </div>
 
+    <input
+      v-model="searchQuery"
+      type="text"
+      placeholder="Chercher un Pokémon..."
+      class="border rounded px-3 py-1 mb-4 w-full max-w-sm"
+    />
+
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <CardPoke
         v-for="p in sortedPokemons"
@@ -166,8 +172,9 @@ onMounted(loadPokemons)
     </div>
 
     <div v-if="limit !== 10000 && selectedTypes.length === 0" class="mt-4 flex justify-between">
-      <button @click="prevPage" :disabled="!hasPrev">Précédent</button>
-      <button @click="nextPage" :disabled="!hasNext">Suivant</button>
+      <button @click="prevPage" :disabled="offset === 0">Précédent</button>
+      <button @click="nextPage" :disabled="offset + limit >= allPokemonsList.length">Suivant</button>
     </div>
   </main>
 </template>
+

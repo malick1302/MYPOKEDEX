@@ -4,7 +4,7 @@ Bienvenue dans **Mon Pokédex**, une application web développée avec Vue.js et
 
 ---
 
-## 🛠 Stack technique
+## Stack technique
 
 - **Framework** : Vue.js (Composition API)
 - **Build Tool** : Vite

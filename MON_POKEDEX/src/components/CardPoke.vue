@@ -1,31 +1,22 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
-import { computed } from 'vue'
-
-const isFavorite = computed(() => store.isFavorite(name))
-const store = useFavoriteStore()
-
+import { RouterLink } from 'vue-router'
 
 const props = defineProps({
   pokemon: Object,
   isDarkMode: Boolean
 })
 
-const isRotating = ref(false)
-
 const name = props.pokemon.name
 const pokemonType = props.pokemon.types?.[0]?.type?.name || 'unknown'
-const id = props.pokemon.id
+
+const store = useFavoriteStore()
+
+const isFavorite = computed(() => store.isFavorite(name))
 
 const imageUrl = computed(() => {
-  return props.pokemon.sprite || ''
-})
-
-const backgroundStyle = computed(() => {
-  const type = pokemonType.toLowerCase()
-  const mode = props.isDarkMode ? 'dark' : 'light'
-  return typeStyles[type]?.[mode] || typeStyles.unknown[mode]
+  return props.pokemon.sprites?.front_default || ''
 })
 
 
@@ -125,41 +116,51 @@ const typeStyles = {
       dark: 'radial-gradient(circle, rgba(0, 0, 0, 1) 0%, rgba(37, 129, 239, 1) 40%, rgba(0, 0, 0, 1) 100%)',
       },
   }
-  
-  function toggleFavorite() {
+
+
+
+const backgroundStyle = computed(() => {
+  const type = pokemonType.toLowerCase()
+  const mode = props.isDarkMode ? 'dark' : 'light'
+  return typeStyles[type]?.[mode] || typeStyles.unknown[mode]
+})
+
+function toggleFavorite() {
   store.toggleFavorite(name)
 }
-  </script>
+</script>
+
+
 
 <template>
-  <div class="relative">
-    <button
-      @click.stop="toggleFavorite"
-      class="absolute top-2 right-2 text-2xl z-10"
-    >
-      <img
-        :src="isFavorite ? 'src/assets/pokered.png' : 'src/assets/pokeball.png'"
-        alt="Favorite status"
-        class="w-8 h-8"
-      />
-    </button>
-
-    <RouterLink :to="`/pokemon/${name}`">
-  <div
-    class="p-12 border-2 border-black"
-    :style="{ background: backgroundStyle }"
-  >
-    <div class="rounded p-7 text-center">
+    <div class="relative">
+      <button
+        @click.stop="toggleFavorite"
+        class="absolute top-2 right-2 text-2xl z-10"
+      >
         <img
-  :src="imageUrl"
-  alt="Pokemon image"
-  class="w-24 h-24 mx-auto"
-/>
-
-      <h2 class="text-xl font-bold capitalize text-white drop-shadow">{{ name }}</h2>
+          :src="isFavorite ? 'src/assets/pokered.png' : 'src/assets/pokeball.png'"
+          alt="Favorite status"
+          class="w-8 h-8"
+        />
+      </button>
+  
+      <RouterLink :to="`/pokemon/${name}`">
+        <div
+          class="p-12 border-2 border-black"
+          :style="{ background: backgroundStyle }"
+        >
+          <div class="rounded p-7 text-center">
+            <img
+              :src="imageUrl"
+              alt="Pokemon image"
+              class="w-24 h-24 mx-auto"
+            />
+            <h2 class="text-xl font-bold capitalize text-white drop-shadow">
+              {{ name }}
+            </h2>
+          </div>
+        </div>
+      </RouterLink>
     </div>
-  </div>
-</RouterLink>
-
-  </div>
-</template>
+  </template>

@@ -1,7 +1,10 @@
 <script setup>
+import { ref, computed, onMounted, watch } from 'vue'
 import CardPoke from '@/components/CardPoke.vue'
-import { ref, onMounted, computed, watch } from 'vue'
-import { fetchPokemonDetails, fetchPokemonByType } from '@/api/pokeapi'
+import PaginationControls from '@/components/PaginationControls.vue'
+import TypeFilter from '@/components/TypeFilter.vue'
+import SearchSortLimit from '@/components/SearchSortLimit.vue'
+import { fetchPokemonDetails } from '@/api/pokeapi'
 
 const pokemons = ref([])
 const allPokemonsList = ref([])
@@ -121,60 +124,32 @@ onMounted(async () => {
   <main>
     <h1>MON POKEDEX</h1>
 
-    <div class="mb-4 flex flex-wrap gap-2 items-center">
-      <label class="mr-2">Filtrer par type :</label>
-      <button
-        v-for="type in allTypes"
-        :key="type"
-        @click="toggleType(type)"
-        :style="{ background: typeStyles[type]?.light || '#eee' }"
-        :class="{
-          'border-2 border-black': selectedTypes.includes(type),
-          'opacity-60': !selectedTypes.includes(type)
-        }"
-        class="rounded px-3 py-1 cursor-pointer text-sm"
-        type="button"
-      >
-        {{ type }}
-      </button>
-    </div>
-
-    <div class="mb-4 flex items-center gap-4" v-if="selectedTypes.length === 0">
-      <label for="limit-select">Nombre de Pokémon par page :</label>
-      <select id="limit-select" v-model.number="limit" class="border rounded px-2 py-1">
-        <option :value="20">20</option>
-        <option :value="50">50</option>
-        <option :value="100">100</option>
-        <option :value="10000">Tous</option>
-      </select>
-
-      <label for="sort-select">Trier par :</label>
-      <select id="sort-select" v-model="sortMode" class="border rounded px-2 py-1">
-        <option value="id">ID</option>
-        <option value="name">Nom</option>
-      </select>
-    </div>
-
-    <input
-      v-model="searchQuery"
-      type="text"
-      placeholder="Chercher un Pokémon..."
-      class="border rounded px-3 py-1 mb-4 w-full max-w-sm"
+    <SearchSortLimit
+      :searchQuery="searchQuery"
+      :sortMode="sortMode"
+      :limit="limit"
+      @update:searchQuery="searchQuery = $event"
+      @update:sortMode="sortMode = $event"
+      @update:limit="limit = $event"
     />
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <CardPoke
-        v-for="p in sortedPokemons"
-        :key="p.id"
-        :pokemon="p"
-        :isDarkMode="false"
-      />
+    <TypeFilter
+      :allTypes="allTypes"
+      :selectedTypes="selectedTypes"
+      :typeStyles="typeStyles"
+      @toggle-type="toggleType"
+    />
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <CardPoke v-for="poke in sortedPokemons" :key="poke.id" :pokemon="poke" />
     </div>
 
-    <div v-if="limit !== 10000 && selectedTypes.length === 0" class="mt-4 flex justify-between">
-      <button @click="prevPage" :disabled="offset === 0">Précédent</button>
-      <button @click="nextPage" :disabled="offset + limit >= allPokemonsList.length">Suivant</button>
-    </div>
+    <PaginationControls
+      :offset="offset"
+      :limit="limit"
+      :total="allPokemonsList.length"
+      @prev="prevPage"
+      @next="nextPage"
+    />
   </main>
 </template>
-

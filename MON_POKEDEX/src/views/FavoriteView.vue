@@ -2,9 +2,11 @@
 import { ref, onMounted, watch } from 'vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
 import FavoriteList from '@/components/FavoriteList.vue'
+import DDarkmodeToggle from '@/components/DDarkmodeToggle.vue'
 
 const favoriteStore = useFavoriteStore()
 const favoritePokemons = ref([])
+const isDarkMode = ref(false)
 
 async function fetchFavorites() {
   if (favoriteStore.favorite.length === 0) {
@@ -32,24 +34,36 @@ async function fetchFavorites() {
 }
 
 onMounted(() => {
-  fetchFavorites()
+  const savedDarkMode = localStorage.getItem('isDarkMode')
+  if (savedDarkMode !== null) {
+    isDarkMode.value = JSON.parse(savedDarkMode)
+    document.documentElement.classList.toggle('dark', isDarkMode.value)
+  }
 })
 
 watch(() => favoriteStore.favorite, () => {
   fetchFavorites()
 }, { immediate: true })
+
+function toggleDarkMode(newDarkMode) {
+  isDarkMode.value = newDarkMode
+  localStorage.setItem('isDarkMode', JSON.stringify(newDarkMode))
+  document.documentElement.classList.toggle('dark', newDarkMode)
+}
 </script>
 
 <template>
-  <main class="p-4">
+  <main class="p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  
+
     <h1 class="text-2xl font-bold mb-4">Mes Pokémon favoris</h1>
     
     <div v-if="favoritePokemons.length > 0">
       <FavoriteList :favoritePokemons="favoritePokemons" />
     </div>
 
-    <div v-else class="text-center text-gray-500">
-      Tu n'as pas de favoris pour le moment ... 
+    <div v-else class="text-center text-gray-500 dark:text-gray-400">
+      Tu n'as pas encore de favoris ... 
     </div>
   </main>
 </template>

@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from "vue-router"
 import { fetchPokemonId, fetchEvolutionChainByName} from '@/api/pokeapi'
+import { useFavoriteStore } from '@/stores/favoriteStore'
 
 const route = useRoute()
 const pokemon = ref(null)

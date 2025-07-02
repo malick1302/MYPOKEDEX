@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
+
 export const useFavoriteStore = defineStore('favorite', () => {
   const favorite = ref([])
 

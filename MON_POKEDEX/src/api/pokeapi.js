@@ -4,15 +4,17 @@ export async function fetchPokemonList(offset = 0, limit = 20) {
     return data;
 }
 
+
 export async function fetchPokemonDetails(url) {
-    const res = await fetch(url);
-    const data = await res.json();
-    return {
-      id: data.id,
-      name: data.name,
-      sprite: data.sprites.front_default,
-    };
+  const res = await fetch(url)
+  const data = await res.json()
+  return {
+    id: data.id,
+    name: data.name,
+    types: data.types.map(t => t.type.name), 
+    sprite: data.sprites.other['official-artwork'].front_default
   }
+}
 
   export async function fetchEvolutionChain(chainUrl) {
     const res = await fetch(chainUrl);

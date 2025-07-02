@@ -1,10 +1,15 @@
-<script setup>
+ <script setup>
+ import Header from '@/components/Header.vue'
 
-</script>
+ 
 
-
-
+ </script>
+ 
 <template>
-   <router-view />
-</template>
+   <div id="app" class="min-h-screen dark:bg-blue-950">
+     <Header />
 
+     <router-view />
+   </div>
+ </template>
+ 

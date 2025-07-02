@@ -5,6 +5,8 @@ import PaginationControls from '@/components/PaginationControls.vue'
 import TypeFilter from '@/components/TypeFilter.vue'
 import SearchSortLimit from '@/components/SearchSortLimit.vue'
 import { fetchPokemonDetails } from '@/api/pokeapi'
+import DBackground from '@/components/DBackground.vue'
+import DDarkmodeToggle from '@/components/DDarkmodeToggle.vue'
 
 const pokemons = ref([])
 const allPokemonsList = ref([])
@@ -13,6 +15,8 @@ const offset = ref(0)
 const sortMode = ref('id')
 const searchQuery = ref('')
 const selectedTypes = ref([])
+const isDarkMode = ref(false)
+
 
 const allTypes = [
   'bug', 'dark', 'dragon', 'electric', 'fairy', 'fighting', 'fire', 'flying',
@@ -103,6 +107,8 @@ function prevPage() {
   }
 }
 
+
+
 const sortedPokemons = computed(() => {
   const list = [...pokemons.value]
   if (sortMode.value === 'id') {
@@ -118,38 +124,47 @@ onMounted(async () => {
   await loadAllPokemonsList()
   await loadPokemonsDetails(allPokemonsList.value.slice(0, limit.value))
 })
+
+console.log('Pokemons:', sortedPokemons)
 </script>
 
 <template>
-  <main>
-    <h1>MON POKEDEX</h1>
+  <DBackground :isDarkMode="isDarkMode">
+    <main class="px-4 sm:px-8 lg:px-16">
+      <img src="@/assets/pokdex.webp" alt="Pokédex" class="w-full max-w-md mx-auto my-4 pt-3"> 
+<DDarkmodeToggle :isDarkMode="isDarkMode" @update:isDarkMode="isDarkMode = $event" />
+      <SearchSortLimit
+        :searchQuery="searchQuery"
+        :sortMode="sortMode"
+        :limit="limit"
+        @update:searchQuery="searchQuery = $event"
+        @update:sortMode="sortMode = $event"
+        @update:limit="limit = $event"
+      />
 
-    <SearchSortLimit
-      :searchQuery="searchQuery"
-      :sortMode="sortMode"
-      :limit="limit"
-      @update:searchQuery="searchQuery = $event"
-      @update:sortMode="sortMode = $event"
-      @update:limit="limit = $event"
-    />
-
-    <TypeFilter
-      :allTypes="allTypes"
-      :selectedTypes="selectedTypes"
-      :typeStyles="typeStyles"
-      @toggle-type="toggleType"
-    />
+      <TypeFilter
+        :allTypes="allTypes"
+        :selectedTypes="selectedTypes"
+        :typeStyles="typeStyles"
+        @toggle-type="toggleType"
+      />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      <CardPoke v-for="poke in sortedPokemons" :key="poke.id" :pokemon="poke" />
-    </div>
+  <CardPoke
+    v-for="poke in sortedPokemons"
+    :key="poke.id"
+    :pokemon="poke"
+    :isDarkMode="isDarkMode"
+  />
+</div>
 
-    <PaginationControls
-      :offset="offset"
-      :limit="limit"
-      :total="allPokemonsList.length"
-      @prev="prevPage"
-      @next="nextPage"
-    />
-  </main>
+      <PaginationControls
+        :offset="offset"
+        :limit="limit"
+        :total="allPokemonsList.length"
+        @prev="prevPage"
+        @next="nextPage"
+      />
+    </main>
+  </DBackground>
 </template>
